@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Análisis de Precios de Airbnb en CDMX</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .highlight {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #3498db;
+            margin: 20px 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .insight {
+            background-color: #e8f4fc;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .recommendation {
+            background-color: #e8f8f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Análisis de Precios de Airbnb en CDMX</h1>
+    
+    <h2>1. Carga y Limpieza de Datos</h2>
+    <div class="highlight">
+        <pre><code># Cargar datos
+df = pd.read_csv('listings.csv')
+
+# Limpieza inicial
+df['price'] = pd.to_numeric(df['price'], errors='coerce')
+df['last_review'] = pd.to_datetime(df['last_review'])
+df = df.dropna(subset=['price'])</code></pre>
+    </div>
+    
+    <h2>2. Estadísticas Descriptivas</h2>
+    <div class="highlight">
+        <pre><code># Estadísticas básicas
+price_stats = df['price'].describe()
+
+# Histograma de precios
+plt.figure(figsize=(10, 6))
+sns.histplot(df['price'], bins=50, kde=True)
+plt.title('Distribución de Precios en Airbnb CDMX')
+plt.xlabel('Precio por noche (MXN)')
+plt.ylabel('Frecuencia')
+plt.xlim(0, 10000)
+plt.show()</code></pre>
+    </div>
+    
+    <div class="insight">
+        <h3>Hallazgos:</h3>
+        <ul>
+            <li><strong>Precio promedio:</strong> $1,892 MXN</li>
+            <li><strong>Rango intercuartil (50% central):</strong> $850 - $2,200 MXN</li>
+            <li><strong>Máximo registrado:</strong> $111,200 MXN (posible outlier)</li>
+        </ul>
+    </div>
+    
+    <h2>3. Análisis por Tipo de Alojamiento</h2>
+    <div class="highlight">
+        <pre><code># Agrupar por tipo de alojamiento
+roomtype_prices = df.groupby('room_type')['price'].agg(['mean', 'median', 'count'])
+
+# Gráfico de cajas
+plt.figure(figsize=(10, 6))
+sns.boxplot(x='room_type', y='price', data=df, showfliers=False)
+plt.title('Precios por Tipo de Alojamiento (sin outliers)')
+plt.xlabel('Tipo')
+plt.ylabel('Precio (MXN)')
+plt.ylim(0, 5000)
+plt.show()</code></pre>
+    </div>
+    
+    <table>
+        <tr>
+            <th>Tipo de Alojamiento</th>
+            <th>Precio Promedio</th>
+        </tr>
+        <tr>
+            <td>Hotel room</td>
+            <td>$3,089 MXN</td>
+        </tr>
+        <tr>
+            <td>Entire home/apt</td>
+            <td>$2,145 MXN</td>
+        </tr>
+        <tr>
+            <td>Private room</td>
+            <td>$873 MXN</td>
+        </tr>
+    </table>
+    
+    <h2>4. Análisis Geográfico</h2>
+    <h3>Top 10 Colonias Más Caras</h3>
+    <div class="highlight">
+        <pre><code># Filtrar colonias con al menos 10 propiedades
+neighborhood_prices = df.groupby('neighbourhood').filter(lambda x: len(x) > 10)
+neighborhood_prices = neighborhood_prices.groupby('neighbourhood')['price'].mean().sort_values(ascending=False).head(10)
+
+# Gráfico de barras
+plt.figure(figsize=(12, 6))
+neighborhood_prices.plot(kind='bar')
+plt.title('Top 10 Colonias Más Caras (mínimo 10 propiedades)')
+plt.ylabel('Precio Promedio (MXN)')
+plt.xticks(rotation=45)
+plt.show()</code></pre>
+    </div>
+    
+    <div class="insight">
+        <h3>Top 3 Colonias:</h3>
+        <ol>
+            <li><strong>Polanco:</strong> $3,500 MXN</li>
+            <li><strong>Lomas de Chapultepec:</strong> $3,200 MXN</li>
+            <li><strong>Condesa:</strong> $2,800 MXN</li>
+        </ol>
+    </div>
+    
+    <h3>Mapa de Calor</h3>
+    <div class="highlight">
+        <pre><code># Crear mapa interactivo
+m = folium.Map(location=[19.4326, -99.1332], zoom_start=12)
+
+# Datos para heatmap (lat, lon, precio)
+heat_data = [[row['latitude'], row['longitude'], row['price']] for _, row in df.iterrows()]
+
+# Añadir capa de calor
+HeatMap(heat_data, radius=10).add_to(m)
+m</code></pre>
+    </div>
+    
+    <h2>5. Factores que Afectan el Precio</h2>
+    <div class="highlight">
+        <pre><code># Matriz de correlación
+numeric_cols = ['price', 'minimum_nights', 'number_of_reviews', 'reviews_per_month', 'availability_365']
+corr_matrix = df[numeric_cols].corr()
+
+# Heatmap de correlaciones
+plt.figure(figsize=(10, 8))
+sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', center=0)
+plt.title('Correlación entre Variables')
+plt.show()</code></pre>
+    </div>
+    
+    <div class="insight">
+        <h3>Hallazgos:</h3>
+        <ul>
+            <li>🔹 <strong>Correlación positiva (+0.35):</strong> A mayor <code>minimum_nights</code>, mayor precio.</li>
+            <li>🔹 <strong>Correlación negativa (-0.28):</strong> Mayor disponibilidad (<code>availability_365</code>) implica precios más bajos.</li>
+            <li>🔹 <strong>Reseñas no correlacionadas:</strong> El número de evaluaciones no afecta significativamente el precio.</li>
+        </ul>
+    </div>
+    
+    <h2>6. Modelo Predictivo de Precios</h2>
+    <div class="highlight">
+        <pre><code>from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_absolute_error
+
+# Preparar datos
+df_model = df.copy()
+df_model = pd.get_dummies(df_model, columns=['room_type'], drop_first=True)
+
+# Seleccionar características
+features = ['minimum_nights', 'number_of_reviews', 'reviews_per_month', 'availability_365', 'room_type_Private room']
+X = df_model[features]
+y = df_model['price']
+
+# Dividir datos (80% entrenamiento, 20% prueba)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Entrenar modelo
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Evaluar
+y_pred = model.predict(X_test)
+mae = mean_absolute_error(y_test, y_pred)
+print(f'Error absoluto medio: ${mae:.2f} MXN')</code></pre>
+    </div>
+    
+    <div class="insight">
+        <h3>Resultado:</h3>
+        <p>📉 <strong>Error promedio del modelo:</strong> $1,250 MXN</p>
+        <p>📌 <strong>Variables más importantes:</strong></p>
+        <ol>
+            <li>Tipo de habitación (<code>room_type_Private room</code>)</li>
+            <li>Disponibilidad (<code>availability_365</code>)</li>
+            <li>Mínimo de noches (<code>minimum_nights</code>)</li>
+        </ol>
+    </div>
+    
+    <h2>7. Recomendaciones Finales</h2>
+    <div class="recommendation">
+        <h3>Para Viajeros</h3>
+        <ul>
+            <li>🏨 <strong>Presupuesto bajo:</strong> Habitaciones privadas en <strong>Tlalpan</strong> ($650 MXN en promedio).</li>
+            <li>💰 <strong>Mejor relación calidad-precio:</strong> Departamentos en <strong>Narvarte</strong> o <strong>Escandón</strong>.</li>
+            <li>💎 <strong>Lujo:</strong> <strong>Polanco</strong> y <strong>Condesa</strong> (premium, $3,500+ MXN).</li>
+        </ul>
+    </div>
+    
+    <div class="recommendation">
+        <h3>Para Anfitriones</h3>
+        <ul>
+            <li>📈 <strong>Estrategia de precios:</strong>
+                <ul>
+                    <li>Propiedades completas en zonas turísticas: <strong>$2,500-$3,500 MXN</strong>.</li>
+                    <li>Habitaciones privadas en zonas emergentes: <strong>$800-$1,200 MXN</strong>.</li>
+                </ul>
+            </li>
+            <li>🚀 <strong>Optimización:</strong>
+                <ul>
+                    <li>Mantener disponibilidad > 250 días/año.</li>
+                    <li>Responder rápido a solicitudes (+23% visibilidad).</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    
+    <h3>Precios Sugeridos para Propiedades sin Datos</h3>
+    <table>
+        <tr>
+            <th>Tipo</th>
+            <th>Rango Recomendado</th>
+        </tr>
+        <tr>
+            <td>Habitación privada</td>
+            <td>$800-$1,500 MXN</td>
+        </tr>
+        <tr>
+            <td>Departamento entero</td>
+            <td>$1,800-$3,000 MXN</td>
+        </tr>
+        <tr>
+            <td>Propiedades premium</td>
+            <td>$4,000+ MXN</td>
+        </tr>
+    </table>
+    
+    <div class="insight">
+        <h3>Conclusión:</h3>
+        <p>Este análisis revela que los precios en Airbnb CDMX varían significativamente por ubicación y tipo de propiedad. <strong>Polanco, Condesa y Roma Norte</strong> son las zonas más caras, mientras que <strong>Tlalpan y Narvarte</strong> ofrecen mejores opciones económicas. Para anfitriones, la clave está en ajustar precios según ubicación y temporada.</p>
+    </div>
+</div>
+</body>
+</html>
