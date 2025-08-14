@@ -7,18 +7,6 @@
 
 Un análisis completo de los precios de Airbnb en la Ciudad de México, identificando patrones, zonas más caras y factores clave que influyen en los precios.
 
-## 📌 Tabla de Contenidos
-- [Objetivos](#🎯-objetivos)
-- [Dataset](#📂-dataset)
-- [Hallazgos Clave](#🔍-hallazgos-clave)
-- [Tecnologías](#🛠️-tecnologías)
-- [Instalación](#⚙️-instalación)
-- [Uso](#🚀-uso)
-- [Resultados Visuales](#📊-resultados-visuales)
-- [Recomendaciones](#💡-recomendaciones)
-- [Contribución](#🤝-contribución)
-- [Licencia](#📜-licencia)
-
 ## 🎯 Objetivos
 1. Analizar la distribución de precios en Airbnb CDMX
 2. Identificar las zonas más caras y económicas
